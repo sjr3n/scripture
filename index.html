@@ -9,473 +9,785 @@
 <meta name="theme-color" content="#0D0F14"/>
 <title>Scripture That Stays</title>
 <style>
-  :root {
-    --bg: #0D0F14;
-    --surface: #111318;
-    --surface2: #141720;
-    --border: #1E2230;
-    --text: #F0EBE0;
-    --muted: #8B8577;
-    --faint: #5A5A6A;
-    --gold: #C8A96E;
-    --gold-light: #E8D5A3;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: Georgia, 'Times New Roman', serif; overscroll-behavior: none; }
-
-  /* Bottom nav */
-  .nav { position: fixed; bottom: 0; left: 0; right: 0; background: #0A0C10; border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
-  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 8px; background: none; border: none; color: var(--faint); cursor: pointer; font-size: 10px; letter-spacing: 0.08em; font-family: sans-serif; transition: color 0.15s; }
-  .nav-btn.active { color: var(--gold); }
-  .nav-btn svg { width: 22px; height: 22px; }
-
-  /* Screens */
-  .screen { display: none; height: 100vh; overflow-y: auto; padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
-  .screen.active { display: block; }
-  .screen::-webkit-scrollbar { display: none; }
-
-  /* Header */
-  .page-header { padding: calc(env(safe-area-inset-top) + 24px) 20px 20px; position: relative; overflow: hidden; }
-  .page-header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(200,169,110,0.08) 0%, transparent 65%); pointer-events: none; }
-  .label { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); font-family: sans-serif; }
-  .page-title { font-size: 26px; font-weight: 400; line-height: 1.2; margin-top: 6px; }
-  .page-sub { font-size: 13px; color: var(--muted); font-style: italic; margin-top: 4px; }
-
-  /* Progress bar */
-  .progress-wrap { padding: 0 20px 24px; }
-  .progress-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; font-family: sans-serif; }
-  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; }
-  .progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); transition: width 0.5s ease; }
-
-  /* Phase list */
-  .phase-list { padding: 0 16px; }
-  .phase-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: border-color 0.2s; }
-  .phase-card.open { border-color: var(--card-color, var(--gold)) !important; }
-  .phase-header { display: flex; align-items: center; gap: 14px; padding: 16px; cursor: pointer; }
-  .phase-icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; border: 1px solid rgba(200,169,110,0.25); background: #1A1D26; display: flex; align-items: center; justify-content: center; font-size: 17px; transition: background 0.2s; }
-  .phase-icon.done { color: var(--card-color, var(--gold)); }
-  .phase-meta { flex: 1; min-width: 0; }
-  .phase-weeks { font-size: 10px; color: var(--faint); letter-spacing: 0.12em; font-family: sans-serif; }
-  .phase-title { font-size: 17px; font-weight: 400; margin-top: 1px; }
-  .phase-sub { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .phase-chevron { color: var(--faint); font-size: 14px; transition: transform 0.2s; flex-shrink: 0; }
-  .phase-card.open .phase-chevron { transform: rotate(180deg); }
-
-  /* Phase body */
-  .phase-body { display: none; }
-  .phase-card.open .phase-body { display: block; }
-  .motif-band { padding: 16px 20px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-  .motif-label { font-size: 10px; letter-spacing: 0.2em; font-family: sans-serif; margin-bottom: 4px; }
-  .motif-title { font-size: 16px; font-style: italic; margin-bottom: 8px; }
-  .motif-desc { font-size: 13px; color: #A09888; line-height: 1.65; }
-
-  /* Tabs */
-  .tabs { display: flex; border-bottom: 1px solid var(--border); }
-  .tab { flex: 1; padding: 12px 4px; background: none; border: none; border-bottom: 2px solid transparent; color: var(--faint); cursor: pointer; font-size: 10px; letter-spacing: 0.12em; font-family: sans-serif; text-transform: uppercase; transition: color 0.15s; }
-  .tab.active { border-bottom-color: var(--card-color, var(--gold)); color: var(--card-color, var(--gold)); }
-
-  /* Tab panels */
-  .tab-panel { display: none; padding: 20px; }
-  .tab-panel.active { display: block; }
-  .panel-intro { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; font-family: sans-serif; margin-bottom: 14px; }
-  .verse-card { background: var(--surface2); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; border-left: 3px solid; }
-  .verse-ref { font-size: 11px; letter-spacing: 0.1em; font-family: sans-serif; margin-bottom: 7px; }
-  .verse-text { font-size: 14px; color: #D8D2C6; line-height: 1.7; font-style: italic; }
-  .story-card { background: var(--surface2); border-radius: 8px; padding: 16px; border-left: 3px solid; }
-  .story-ref { font-size: 11px; letter-spacing: 0.1em; font-family: sans-serif; margin-bottom: 4px; }
-  .story-title { font-size: 16px; margin-bottom: 10px; }
-  .story-desc { font-size: 13px; color: #A09888; line-height: 1.7; }
-  .connection-card { background: var(--surface2); border-radius: 8px; padding: 18px; border-left: 3px solid; }
-  .connection-text { font-size: 14px; color: #C8C2B6; line-height: 1.8; }
-
-  /* Done button */
-  .done-btn-wrap { padding: 16px 20px 20px; }
-  .done-btn { width: 100%; padding: 14px; border-radius: 10px; border: 1px solid; cursor: pointer; font-size: 13px; font-family: sans-serif; letter-spacing: 0.1em; transition: all 0.2s; }
-
-  /* Overview screen */
-  .overview-grid { padding: 0 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .overview-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 14px; cursor: pointer; transition: border-color 0.2s; }
-  .overview-card.done { opacity: 0.6; }
-  .overview-num { font-size: 10px; color: var(--faint); font-family: sans-serif; letter-spacing: 0.1em; margin-bottom: 4px; }
-  .overview-icon { font-size: 22px; margin-bottom: 6px; }
-  .overview-title { font-size: 14px; line-height: 1.3; }
-  .overview-weeks { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: sans-serif; }
-  .overview-bar { height: 2px; border-radius: 1px; margin-top: 10px; background: var(--border); }
-  .overview-bar-fill { height: 100%; border-radius: 1px; transition: width 0.3s; }
-
-  /* About screen */
-  .about-section { padding: 20px; }
-  .about-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 14px; }
-  .about-block-title { font-size: 11px; color: var(--gold); letter-spacing: 0.2em; font-family: sans-serif; margin-bottom: 10px; }
-  .about-block p { font-size: 14px; color: #A09888; line-height: 1.7; }
-  .about-block p + p { margin-top: 10px; }
-  .verse-hero { text-align: center; padding: 28px 20px; }
-  .verse-hero-text { font-size: 17px; font-style: italic; color: var(--text); line-height: 1.6; }
-  .verse-hero-ref { font-size: 12px; color: var(--gold); font-family: sans-serif; letter-spacing: 0.15em; margin-top: 10px; }
+:root{--bg:#0D0F14;--s1:#111318;--s2:#141720;--border:#1E2230;--text:#F0EBE0;--muted:#8B8577;--faint:#4A4A5A;--gold:#C8A96E;--gold2:#E8D5A3}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:Georgia,'Times New Roman',serif;overscroll-behavior:none}
+/* SCREENS */
+.screen{display:none;position:fixed;inset:0;overflow-y:auto;background:var(--bg);z-index:1}
+.screen.active{display:block}
+.screen::-webkit-scrollbar{display:none}
+.screen-inner{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+/* SLIDE SCREEN (day detail) */
+.slide{display:none;position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto;transform:translateX(100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1)}
+.slide.active{display:block;transform:translateX(0)}
+.slide::-webkit-scrollbar{display:none}
+/* PHASE DETAIL */
+.pdetail{display:none;position:fixed;inset:0;background:var(--bg);z-index:10;overflow-y:auto;transform:translateX(100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1)}
+.pdetail.active{display:block;transform:translateX(0)}
+.pdetail::-webkit-scrollbar{display:none}
+/* NAV */
+.nav{position:fixed;bottom:0;left:0;right:0;background:#09090D;border-top:1px solid var(--border);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 4px 8px;background:none;border:none;color:var(--faint);cursor:pointer;font-size:9px;letter-spacing:0.1em;font-family:sans-serif;text-transform:uppercase;transition:color 0.15s}
+.nav-btn.active{color:var(--gold)}
+.nav-btn svg{width:20px;height:20px}
+/* HEADERS */
+.page-hdr{padding:calc(env(safe-area-inset-top) + 20px) 18px 16px;position:relative}
+.page-hdr::after{content:'';position:absolute;bottom:0;left:18px;right:18px;height:1px;background:var(--border)}
+.lbl{font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);font-family:sans-serif;margin-bottom:4px}
+.ptitle{font-size:24px;font-weight:400;line-height:1.2}
+.psub{font-size:12px;color:var(--muted);font-style:italic;margin-top:3px}
+/* BACK BAR */
+.back-bar{display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top) + 12px) 16px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:5}
+.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--gold);cursor:pointer;font-size:13px;font-family:sans-serif;padding:6px 0}
+.back-btn svg{width:16px;height:16px}
+.back-bar-title{font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* PROGRESS */
+.prog-wrap{padding:16px 18px}
+.prog-row{display:flex;justify-content:space-between;margin-bottom:6px;font-size:10px;font-family:sans-serif;color:var(--muted)}
+.prog-bar{height:2px;background:var(--border);border-radius:2px}
+.prog-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold2));transition:width .5s}
+/* PHASE CARDS */
+.phase-list{padding:0 14px}
+.pcard{background:var(--s1);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;cursor:pointer;transition:border-color .2s}
+.pcard:active{opacity:.85}
+.pcard-inner{display:flex;align-items:center;gap:12px;padding:15px}
+.pcard-icon{width:40px;height:40px;flex-shrink:0;border-radius:50%;border:1px solid rgba(200,169,110,.2);background:#181B24;display:flex;align-items:center;justify-content:center;font-size:16px}
+.pcard-meta{flex:1;min-width:0}
+.pcard-wk{font-size:9px;color:var(--faint);letter-spacing:.12em;font-family:sans-serif}
+.pcard-title{font-size:16px;margin-top:1px}
+.pcard-sub{font-size:11px;color:var(--muted);font-style:italic;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.pcard-days{font-size:9px;color:var(--faint);font-family:sans-serif;letter-spacing:.08em}
+.pcard-check{width:22px;height:22px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px}
+/* PHASE DETAIL DAYS */
+.phase-hero{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.phase-hero-motif{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic}
+.day-list{padding:12px 14px}
+.dcard{display:flex;align-items:center;gap:12px;background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:13px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.dcard:active{opacity:.8}
+.dcard-num{width:30px;height:30px;flex-shrink:0;border-radius:50%;background:var(--s2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);font-family:sans-serif}
+.dcard-num.done{background:rgba(200,169,110,.15);border-color:var(--gold);color:var(--gold)}
+.dcard-meta{flex:1;min-width:0}
+.dcard-title{font-size:14px}
+.dcard-passage{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:sans-serif}
+.dcard-arr{color:var(--faint);font-size:12px;flex-shrink:0}
+/* ANCHOR CHIPS */
+.anchor-chips{display:flex;flex-direction:column;gap:6px;padding:14px 18px;border-bottom:1px solid var(--border)}
+.anchor-chip{background:rgba(200,169,110,.08);border:1px solid rgba(200,169,110,.25);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--gold2);font-family:sans-serif;letter-spacing:.05em}
+/* DAY DETAIL */
+.day-hero{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.day-hero-day{font-size:9px;color:var(--faint);letter-spacing:.2em;font-family:sans-serif;margin-bottom:4px}
+.day-hero-title{font-size:22px;font-weight:400}
+.day-hero-passage{font-size:14px;color:var(--gold);font-family:sans-serif;margin-top:4px;letter-spacing:.05em}
+.day-hero-note{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;font-style:italic}
+/* READINGS ROW */
+.readings-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px 14px;border-bottom:1px solid var(--border)}
+.reading-chip{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.reading-chip-label{font-size:9px;color:var(--faint);letter-spacing:.15em;font-family:sans-serif;margin-bottom:3px}
+.reading-chip-val{font-size:12px;color:var(--text);font-family:sans-serif}
+/* TABS */
+.tabs{display:flex;border-bottom:1px solid var(--border);position:sticky;top:53px;background:var(--bg);z-index:4}
+.tab{flex:1;padding:13px 4px;background:none;border:none;border-bottom:2px solid transparent;color:var(--faint);cursor:pointer;font-size:9px;letter-spacing:.12em;font-family:sans-serif;text-transform:uppercase;transition:color .15s}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-panel{display:none;padding:18px}
+.tab-panel.active{display:block}
+/* DEEP DIVE */
+.dive-btn{width:100%;padding:15px;border-radius:10px;border:1px solid var(--gold);background:rgba(200,169,110,.08);color:var(--gold);cursor:pointer;font-size:13px;font-family:sans-serif;letter-spacing:.1em;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.dive-btn:active{opacity:.8}
+.dive-content{font-size:14px;color:#C8C2B6;line-height:1.8;margin-top:14px}
+.dive-loading{text-align:center;padding:30px;color:var(--muted);font-style:italic;font-size:13px}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* EW LINK */
+.ew-btn{display:block;width:100%;padding:15px;border-radius:10px;border:1px solid var(--border);background:var(--s1);color:var(--text);text-decoration:none;font-size:13px;font-family:sans-serif;letter-spacing:.08em;text-align:center;transition:border-color .2s;margin-bottom:10px}
+.ew-btn:active{opacity:.8}
+.ew-note{font-size:11px;color:var(--muted);text-align:center;line-height:1.6}
+/* SETTINGS */
+.settings-section{padding:16px 14px}
+.settings-block{background:var(--s1);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.settings-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{flex:1;font-size:14px}
+.settings-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:sans-serif}
+.settings-input{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;font-family:sans-serif;outline:none;margin-top:8px}
+.settings-input:focus{border-color:var(--gold)}
+.save-btn{width:100%;padding:14px;border-radius:10px;border:none;background:var(--gold);color:#0D0F14;cursor:pointer;font-size:13px;font-family:sans-serif;font-weight:bold;letter-spacing:.1em;transition:opacity .2s;margin-top:8px}
+.save-btn:active{opacity:.8}
+.settings-info{font-size:12px;color:var(--muted);line-height:1.6;padding:14px 16px}
+/* MAP */
+.map-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:14px}
+.map-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:border-color .2s}
+.map-card:active{opacity:.8}
+.map-num{font-size:9px;color:var(--faint);letter-spacing:.12em;font-family:sans-serif;margin-bottom:2px}
+.map-icon{font-size:20px;margin-bottom:5px}
+.map-title{font-size:13px;line-height:1.3}
+.map-wk{font-size:10px;color:var(--muted);margin-top:3px;font-family:sans-serif}
+.map-prog{height:2px;background:var(--border);border-radius:1px;margin-top:8px}
+.map-prog-fill{height:100%;border-radius:1px;transition:width .3s}
+/* VERSE DISPLAY */
+.verse-card{background:var(--s2);border-radius:8px;padding:14px;border-left:3px solid var(--gold);margin-bottom:10px}
+.verse-ref{font-size:10px;color:var(--gold);letter-spacing:.12em;font-family:sans-serif;margin-bottom:6px}
+.verse-text{font-size:14px;color:#D8D2C6;line-height:1.7;font-style:italic}
 </style>
 </head>
 <body>
 
-<!-- SCREEN: Home (Phases) -->
+<!-- HOME -->
 <div class="screen active" id="screen-home">
-  <div class="page-header">
-    <div class="label">Depth-First Bible Journey</div>
-    <div class="page-title">Scripture That Stays With You</div>
-    <div class="page-sub">10 Phases · 26 Weeks</div>
-  </div>
-  <div class="progress-wrap">
-    <div class="progress-row">
-      <span style="color:var(--muted);font-family:sans-serif">PROGRESS</span>
-      <span style="color:var(--gold);font-family:sans-serif" id="progress-label">0 / 10 phases</span>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-  </div>
-  <div class="phase-list" id="phase-list"></div>
+<div class="screen-inner">
+<div class="page-hdr">
+<div class="lbl">Depth-First · 26 Weeks</div>
+<div class="ptitle">Scripture That Stays</div>
+<div class="psub">10 Phases · Built for depth, not checkboxes</div>
+</div>
+<div class="prog-wrap">
+<div class="prog-row"><span>OVERALL PROGRESS</span><span id="prog-label" style="color:var(--gold)">0 / 10 phases</span></div>
+<div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+<div class="phase-list" id="phase-list"></div>
+</div>
 </div>
 
-<!-- SCREEN: Overview -->
-<div class="screen" id="screen-overview">
-  <div class="page-header">
-    <div class="label">All Phases</div>
-    <div class="page-title">Your Map</div>
-    <div class="page-sub">Every theme at a glance</div>
-  </div>
-  <div class="overview-grid" id="overview-grid"></div>
+<!-- MAP -->
+<div class="screen" id="screen-map">
+<div class="screen-inner">
+<div class="page-hdr"><div class="lbl">All Phases</div><div class="ptitle">Your Map</div><div class="psub">Every theme at a glance</div></div>
+<div class="map-grid" id="map-grid"></div>
+</div>
 </div>
 
-<!-- SCREEN: About -->
-<div class="screen" id="screen-about">
-  <div class="page-header">
-    <div class="label">How to Use This</div>
-    <div class="page-title">The Method</div>
-  </div>
-  <div class="about-section">
-    <div class="verse-hero">
-      <div class="verse-hero-text">"Your word is a lamp to my feet<br>and a light to my path."</div>
-      <div class="verse-hero-ref">PSALM 119:105</div>
-    </div>
-    <div class="about-block">
-      <div class="about-block-title">WHY THIS PLAN EXISTS</div>
-      <p>This isn't a "read through the Bible in a year" plan. It's built for depth and memorability — so Scripture actually sticks, and you can recall it naturally in conversation.</p>
-      <p>You're not checking boxes. You're building a mental map of the whole story, one image at a time.</p>
-    </div>
-    <div class="about-block">
-      <div class="about-block-title">HOW EACH PHASE WORKS</div>
-      <p><strong style="color:var(--text)">Memorize</strong> — Three anchor verses per phase. Learn these cold: the text AND the reference. These are the ones that will come back to you at 2am during spiritual warfare.</p>
-      <p><strong style="color:var(--text)">The Story</strong> — The narrative context so the verses aren't floating in space. Read it slowly — like a movie scene, not a checklist.</p>
-      <p><strong style="color:var(--text)">Connection</strong> — How the image echoes somewhere else in Scripture. This is what builds the map in your mind.</p>
-    </div>
-    <div class="about-block">
-      <div class="about-block-title">THE SECRET</div>
-      <p>The people who can recall Scripture naturally don't know more chapters than you. They have 30–40 passages they know deeply, and a general familiarity with the rest.</p>
-      <p>Don't rush a phase. Sit with the anchor verses until they're yours. Then move forward.</p>
-    </div>
-    <div class="about-block">
-      <div class="about-block-title">ADD TO HOME SCREEN</div>
-      <p><strong style="color:var(--text)">iPhone:</strong> Tap the Share button in Safari → "Add to Home Screen"</p>
-      <p><strong style="color:var(--text)">Android:</strong> Tap the menu (⋮) in Chrome → "Add to Home Screen" or "Install App"</p>
-    </div>
-  </div>
+<!-- SETTINGS -->
+<div class="screen" id="screen-settings">
+<div class="screen-inner">
+<div class="page-hdr"><div class="lbl">Settings</div><div class="ptitle">App Settings</div></div>
+<div class="settings-section">
+<div class="settings-block">
+<div class="settings-row" style="flex-direction:column;align-items:flex-start">
+<div>
+<div class="settings-label">AI Deep Dive API Key</div>
+<div class="settings-sub">Anthropic API key for AI-generated commentary</div>
+</div>
+<input class="settings-input" id="api-key-input" type="password" placeholder="sk-ant-..."/>
+<button class="save-btn" onclick="saveApiKey()">Save Key</button>
+</div>
+<div class="settings-info">The AI Deep Dive feature uses the Anthropic API. Get a free key at <strong style="color:var(--gold)">console.anthropic.com</strong> — free credits included. Your key is stored only on this device.</div>
+</div>
+<div class="settings-block">
+<div class="settings-row" style="flex-direction:column;align-items:flex-start">
+<div class="settings-label">Reset Progress</div>
+<div class="settings-sub">Clear all completed days and phases</div>
+<button class="save-btn" style="background:var(--border);color:var(--muted);margin-top:8px" onclick="resetProgress()">Reset All Progress</button>
+</div>
+</div>
+<div class="settings-block">
+<div class="settings-info" style="border:none">
+<strong style="color:var(--text)">Add to Home Screen</strong><br><br>
+<strong style="color:var(--gold)">iPhone:</strong> Safari → Share → Add to Home Screen<br><br>
+<strong style="color:var(--gold)">Android:</strong> Chrome → Menu → Add to Home Screen
+</div>
+</div>
+</div>
+</div>
 </div>
 
-<!-- Bottom Nav -->
-<nav class="nav">
-  <button class="nav-btn active" onclick="showScreen('home', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-    PHASES
-  </button>
-  <button class="nav-btn" onclick="showScreen('overview', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
-    MAP
-  </button>
-  <button class="nav-btn" onclick="showScreen('about', this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg>
-    METHOD
-  </button>
+<!-- PHASE DETAIL -->
+<div class="pdetail" id="pdetail">
+<div id="pdetail-inner"></div>
+</div>
+
+<!-- DAY DETAIL -->
+<div class="slide" id="day-slide">
+<div id="day-inner"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav" id="main-nav">
+<button class="nav-btn active" id="nav-home" onclick="showScreen('home',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+Phases
+</button>
+<button class="nav-btn" id="nav-map" onclick="showScreen('map',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6-3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+Map
+</button>
+<button class="nav-btn" id="nav-settings" onclick="showScreen('settings',this)">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+Settings
+</button>
 </nav>
 
 <script>
-const PHASES = [
-  {
-    number: 1, weeks: "Weeks 1–2", title: "Do Not Be Afraid", subtitle: "The thread you're already holding",
-    image: "🛡", color: "#C8A96E",
-    motif: "The Guard at the Gate",
-    motifDesc: "Peace isn't passive in Scripture — it's a warrior. Philippians 4:7 says peace will 'guard' your heart. That's a soldier posted at the door. Watch for this: every time God says 'do not fear,' He's deploying that guard.",
-    anchor: [
-      { ref: "Philippians 4:6–7", text: "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus." },
-      { ref: "Matthew 6:34", text: "Therefore do not worry about tomorrow, for tomorrow will worry about itself. Each day has enough trouble of its own." },
-      { ref: "Isaiah 41:10", text: "So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you; I will uphold you with my righteous right hand." }
-    ],
-    story: { ref: "Mark 14:32–42", title: "Jesus in Gethsemane", desc: "The most anxious moment in all of Scripture. Jesus — fully God, fully human — is sweating blood before the cross. He prays the exact thing Paul tells us to pray. Watch how He does it. This is why Philippians 4 is not just advice — it's a pattern modeled by Jesus Himself." },
-    connection: "Jesus says 'do not worry' in Matthew 6. Then He lives it under pressure in Gethsemane. Then Paul echoes it from a prison cell in Philippians 4. Three moments, same truth, same guard at the gate."
-  },
-  {
-    number: 2, weeks: "Weeks 3–4", title: "The Shepherd", subtitle: "One image that runs the whole Bible",
-    image: "🐑", color: "#7EB8A4",
-    motif: "The Shepherd and the Sheep",
-    motifDesc: "This is one of the most loaded images in all of Scripture. It starts with actual shepherds — Abraham, Moses, David — and ends with Jesus calling Himself the Good Shepherd. Every time you see a shepherd, something important is happening.",
-    anchor: [
-      { ref: "Psalm 23:1–3", text: "The Lord is my shepherd, I lack nothing. He makes me lie down in green pastures, he leads me beside quiet waters, he refreshes my soul. He guides me along the right paths for his name's sake." },
-      { ref: "John 10:11", text: "I am the good shepherd. The good shepherd lays down his life for the sheep." },
-      { ref: "Luke 15:4", text: "Suppose one of you has a hundred sheep and loses one of them. Doesn't he leave the ninety-nine in the open country and go after the lost sheep until he finds it?" }
-    ],
-    story: { ref: "Ezekiel 34:1–16 + John 10:1–18", title: "Bad Shepherds and the One True Shepherd", desc: "In Ezekiel 34, God tears into Israel's leaders for being terrible shepherds. Then He promises: 'I myself will search for my sheep.' Jump to John 10 and Jesus says 'I am the Good Shepherd.' He is the fulfillment of Ezekiel's 600-year-old promise." },
-    connection: "David was a literal shepherd before he was king (1 Samuel 16). Psalm 23 is him writing as both a shepherd and a sheep. Jesus — descended from David — calls Himself the shepherd. The image is a bloodline."
-  },
-  {
-    number: 3, weeks: "Weeks 5–6", title: "Light Breaking In", subtitle: "The first words God ever spoke",
-    image: "✦", color: "#E8D5A3",
-    motif: "Light vs. Darkness",
-    motifDesc: "The Bible opens with darkness and God speaking light into it. It ends with a city that needs no sun because God Himself is the light. Every story in between is a variation of this theme.",
-    anchor: [
-      { ref: "John 1:1–5", text: "In the beginning was the Word, and the Word was with God, and the Word was God... In him was life, and that life was the light of all mankind. The light shines in the darkness, and the darkness has not overcome it." },
-      { ref: "John 8:12", text: "I am the light of the world. Whoever follows me will never walk in darkness, but will have the light of life." },
-      { ref: "Psalm 27:1", text: "The Lord is my light and my salvation — whom shall I fear? The Lord is the stronghold of my life — of whom shall I be afraid?" }
-    ],
-    story: { ref: "Genesis 1:1–5 → John 1:1–14", title: "Two Beginnings, One Story", desc: "Read Genesis 1:1–5. Then immediately read John 1:1–14. John is deliberately echoing Genesis — 'In the beginning...' Both involve God, darkness, and light. Genesis is physical creation. John is new creation. Jesus doesn't just bring light — He IS the light that was there at the very start." },
-    connection: "Isaiah 9:2 — written 700 years before Jesus — says 'the people walking in darkness have seen a great light.' Matthew 4:16 quotes it directly as Jesus begins His ministry in Galilee. Same image, 700 years apart, same person."
-  },
-  {
-    number: 4, weeks: "Weeks 7–9", title: "The Exodus", subtitle: "The original rescue story",
-    image: "🌊", color: "#6B9EC7",
-    motif: "The Deliverer",
-    motifDesc: "Exodus is the template for every rescue story in Scripture including the cross. Slavery, a deliverer, a death, a crossing, freedom, a covenant. The entire Gospel follows this exact pattern. Moses is a shadow. Jesus is the real thing.",
-    anchor: [
-      { ref: "Exodus 14:14", text: "The Lord will fight for you; you need only to be still." },
-      { ref: "Exodus 3:14", text: "God said to Moses, 'I AM WHO I AM. This is what you are to say to the Israelites: I AM has sent me to you.'" },
-      { ref: "1 Corinthians 10:1–4", text: "They all passed through the sea... they all ate the same spiritual food and drank the same spiritual drink; for they drank from the spiritual rock that accompanied them, and that rock was Christ." }
-    ],
-    story: { ref: "Exodus 3–4, 12–14", title: "The Burning Bush to the Red Sea", desc: "Start with the burning bush (Exodus 3–4) — God reveals His name as I AM and commissions Moses. Then Exodus 12 (the Passover lamb's blood on the door) and Exodus 14 (Red Sea). Paul in 1 Corinthians says the rock that gave water in the wilderness 'was Christ.' He's reading Exodus as a Jesus story." },
-    connection: "In John 8:58, Jesus says 'Before Abraham was born, I AM.' The crowd immediately tried to stone Him — because they knew He was claiming to be the voice from the burning bush."
-  },
-  {
-    number: 5, weeks: "Weeks 10–12", title: "The Kingdom", subtitle: "What Jesus actually came to say",
-    image: "⛰", color: "#A89CC8",
-    motif: "The Upside-Down Kingdom",
-    motifDesc: "Jesus kept saying 'the Kingdom of Heaven is like...' — and every comparison was surprising. The last are first. The poor are blessed. The greatest is the servant. This isn't inspirational speaking. It's a total reordering of reality.",
-    anchor: [
-      { ref: "Matthew 5:3–5", text: "Blessed are the poor in spirit, for theirs is the kingdom of heaven. Blessed are those who mourn, for they will be comforted. Blessed are the meek, for they will inherit the earth." },
-      { ref: "Matthew 6:33", text: "But seek first his kingdom and his righteousness, and all these things will be given to you as well." },
-      { ref: "Isaiah 61:1–2", text: "The Spirit of the Sovereign Lord is on me, because the Lord has anointed me to proclaim good news to the poor. He has sent me to bind up the brokenhearted, to proclaim freedom for the captives..." }
-    ],
-    story: { ref: "Luke 4:14–21 + Matthew 5–7", title: "The Mission Statement and the Manifesto", desc: "Luke 4: Jesus stands in His hometown synagogue and reads Isaiah 61, then says 'today this scripture is fulfilled in your hearing.' That's His mission statement. Then Matthew 5–7 (Sermon on the Mount) is the full unpacking of what the Kingdom actually looks like. These two passages together are Jesus' manifesto." },
-    connection: "Isaiah 61 was written ~700 BC. Jesus reads it in Luke 4 and claims to BE its fulfillment. Every Beatitude in Matthew 5 is a direct echo of Isaiah's picture of the Kingdom."
-  },
-  {
-    number: 6, weeks: "Weeks 13–15", title: "The Names", subtitle: "Seven ways Jesus said 'I AM'",
-    image: "✶", color: "#C8A96E",
-    motif: "The I AM Statements",
-    motifDesc: "In John's Gospel, Jesus makes seven 'I AM' statements — Bread, Light, Gate, Good Shepherd, Resurrection, Way/Truth/Life, Vine. Each one echoes God's name from Exodus 3:14. Jesus isn't being poetic. He's making a claim.",
-    anchor: [
-      { ref: "John 14:6", text: "Jesus answered, 'I am the way and the truth and the life. No one comes to the Father except through me.'" },
-      { ref: "John 6:35", text: "Then Jesus declared, 'I am the bread of life. Whoever comes to me will never go hungry, and whoever believes in me will never be thirsty.'" },
-      { ref: "John 11:25–26", text: "Jesus said to her, 'I am the resurrection and the life. The one who believes in me will live, even though they die; and whoever lives by believing in me will never die.'" }
-    ],
-    story: { ref: "John 6, 8, 10, 11, 14, 15", title: "All Seven I AM Statements in John", desc: "Read them in order — Bread of Life (6:35), Light of the World (8:12), Gate (10:7), Good Shepherd (10:11), Resurrection and Life (11:25), Way/Truth/Life (14:6), True Vine (15:1). Each was spoken in a specific situation. Context makes each one hit differently. This will rewire how you read John." },
-    connection: "You've already memorized two of these — John 8:12 (Phase 3) and John 10:11 (Phase 2). You're already building this map without realizing it."
-  },
-  {
-    number: 7, weeks: "Weeks 16–18", title: "Wisdom and Two Paths", subtitle: "The oldest question in Proverbs",
-    image: "⚖", color: "#7EB8A4",
-    motif: "The Fork in the Road",
-    motifDesc: "Proverbs is built entirely around one image: two paths. Wisdom's path and Folly's path. Two women calling out from opposite sides of the street. Solomon himself took the wrong turn — which makes his wisdom writing both brilliant and tragic.",
-    anchor: [
-      { ref: "Proverbs 3:5–6", text: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." },
-      { ref: "Proverbs 4:18–19", text: "The path of the righteous is like the morning sun, shining ever brighter till the full light of day. But the way of the wicked is like deep darkness; they do not know what makes them stumble." },
-      { ref: "James 1:5", text: "If any of you lacks wisdom, you should ask God, who gives generously to all without finding fault, and it will be given to you." }
-    ],
-    story: { ref: "1 Kings 3, 10–11", title: "Solomon: Wisdom Gained, Wisdom Lost", desc: "In 1 Kings 3, God offers Solomon anything he wants and he asks for wisdom — one of the most stunning moments in the Old Testament. Then read 1 Kings 10–11 and watch the tragic descent. The man who wrote Proverbs didn't follow it. That tension makes the whole book hit differently." },
-    connection: "Matthew 7:24–27 — Jesus ends the Sermon on the Mount with 'the wise man built his house on the rock.' It's a direct Proverbs image. Jesus is saying: I am the rock that Proverbs was always pointing toward."
-  },
-  {
-    number: 8, weeks: "Weeks 19–21", title: "The Suffering Servant", subtitle: "Written 700 years before it happened",
-    image: "✝", color: "#C47E7E",
-    motif: "The Lamb",
-    motifDesc: "Isaiah 53 is the passage that stopped people cold. Written around 700 BC, it describes someone pierced for our transgressions, led like a lamb to slaughter, buried with the rich in his death. Read it before you read the crucifixion.",
-    anchor: [
-      { ref: "Isaiah 53:5", text: "But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed." },
-      { ref: "Revelation 5:12", text: "In a loud voice they were saying: 'Worthy is the Lamb, who was slain, to receive power and wealth and wisdom and strength and honor and glory and praise!'" },
-      { ref: "John 1:29", text: "The next day John saw Jesus coming toward him and said, 'Look, the Lamb of God, who takes away the sin of the world!'" }
-    ],
-    story: { ref: "Isaiah 52:13–53:12 → Mark 15", title: "The Prophecy and the Fulfillment", desc: "Read Isaiah 53 first — all of it, slowly. Then immediately read Mark 15 (the crucifixion). Almost every detail of Isaiah 53 appears in the crucifixion narrative. 'Pierced for our transgressions' — the nails. 'Assigned a grave with the wicked' — crucified between two criminals. 'With the rich in his death' — buried in Joseph's tomb. 700 years apart. Same story." },
-    connection: "In Revelation 5, John sees a Lion become a Lamb — looking as if it had been slain. He's weeping because no one is worthy to open the scroll, and then this happens. The whole Bible is in that single image."
-  },
-  {
-    number: 9, weeks: "Weeks 22–24", title: "Death Couldn't Hold Him", subtitle: "The bridge of What A Beautiful Name",
-    image: "☀", color: "#6B9EC7",
-    motif: "New Creation",
-    motifDesc: "The resurrection isn't just Jesus coming back to life. It's the beginning of a new kind of existence. The empty tomb is a new Garden of Eden. Mary mistakes Jesus for a gardener (John 20:15). That's not an accident. The whole story is starting over.",
-    anchor: [
-      { ref: "Romans 8:11", text: "And if the Spirit of him who raised Jesus from the dead is living in you, he who raised Christ from the dead will also give life to your mortal bodies because of his Spirit who lives in you." },
-      { ref: "1 Corinthians 15:55–57", text: "Where, O death, is your victory? Where, O death, is your sting? The sting of death is sin, and the power of sin is the law. But thanks be to God! He gives us the victory through our Lord Jesus Christ." },
-      { ref: "2 Corinthians 5:17", text: "Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!" }
-    ],
-    story: { ref: "John 20–21", title: "The Empty Tomb and the Breakfast on the Shore", desc: "Read John 20 (resurrection morning) then John 21 (Jesus cooking breakfast on the beach). John 21 is Jesus restoring Peter, who denied Him three times, by asking him three times: 'Do you love me?' Same number. Peter's shame is being directly healed. That's the kind of detail that makes this feel like a movie." },
-    connection: "The bridge of What A Beautiful Name — 'death could not hold you' — echoes Acts 2:24: God raised Him 'because it was impossible for death to keep its hold on him.' Impossible. Death had no legal claim."
-  },
-  {
-    number: 10, weeks: "Weeks 25–26", title: "All Things New", subtitle: "The last two chapters answer the first three",
-    image: "◈", color: "#A89CC8",
-    motif: "Full Circle",
-    motifDesc: "Revelation 21–22 is Genesis 1–3 with everything restored and nothing broken. Garden becomes city. The tree of life blocked off in Genesis 3 is freely available in Revelation 22. No more curse. God walking with humanity again.",
-    anchor: [
-      { ref: "Revelation 21:5", text: "He who was seated on the throne said, 'I am making everything new!' Then he said, 'Write this down, for these words are trustworthy and true.'" },
-      { ref: "Revelation 22:13", text: "I am the Alpha and the Omega, the First and the Last, the Beginning and the End." },
-      { ref: "Revelation 21:3–4", text: "And I heard a loud voice from the throne saying, 'Look! God's dwelling place is now among the people... He will wipe every tear from their eyes. There will be no more death or mourning or crying or pain, for the old order of things has passed away.'" }
-    ],
-    story: { ref: "Genesis 1–3 → Revelation 21–22", title: "Read the Beginning and the Ending Back to Back", desc: "Genesis 1: God creates light. Revelation 22: No sun needed — God is the light. Genesis 2: Tree of life in the garden. Revelation 22: Tree of life bearing fruit every month. Genesis 3: Humanity exiled. Revelation 21: God's dwelling is with humanity forever. Everything that broke in Genesis 3 is fixed in Revelation 21–22." },
-    connection: "Jesus in Revelation 22:16 calls Himself 'the Root and the Offspring of David.' That single line ties together King David (Phase 2), the Shepherd (Phase 2), the I AM (Phase 6), and the Lamb (Phase 8). Every thread lands here."
-  }
+// ─── DATA ────────────────────────────────────────────────────────────
+const P = [
+  {n:1,w:"Weeks 1–2",title:"Do Not Be Afraid",sub:"The thread you're already holding",img:"🛡",c:"#C8A96E",
+   anchor:["Philippians 4:6–7","Isaiah 41:10"],
+   days:[
+    {t:"Gethsemane",p:"Mark 14:32–42",note:"The most anxious moment in all of Scripture. Watch how Jesus prays — this is the model for Philippians 4."},
+    {t:"The Anchor Passage",p:"Philippians 4:1–9",note:"Paul writes this from a prison cell. The context changes everything about what 'do not be anxious' means."},
+    {t:"Do Not Worry",p:"Matthew 6:25–34",note:"Ravens. Lilies. Tomorrow. Jesus on anxiety — your life verse is in verse 34."},
+    {t:"I Am Your God",p:"Isaiah 41:1–16",note:"God speaks to Israel in exile. 'Do not fear' appears three times. Count them."},
+    {t:"God Is Our Refuge",p:"Psalm 46",note:"Read this as a worship song, not a theology lesson. Notice the refrain."},
+    {t:"Consider the Ravens",p:"Luke 12:22–34",note:"A parallel to Matthew 6 — Luke adds details Matthew doesn't include."},
+    {t:"Spirit of Power",p:"2 Timothy 1:6–14",note:"God didn't give you a spirit of fear. He gave you power, love, and a sound mind."},
+    {t:"Nothing Can Separate",p:"Romans 8:28–39",note:"The crescendo of Romans. The most reassuring passage in the New Testament."},
+    {t:"Be Strong and Courageous",p:"Deuteronomy 31:1–8",note:"Moses to the nation before his death. The same command appears three times."},
+    {t:"The Commission of Joshua",p:"Joshua 1:1–9",note:"God repeats Moses' exact words to Joshua. Same guard at the gate, new leader."},
+    {t:"Peace I Leave With You",p:"John 14:25–31",note:"Jesus gives peace before going to the cross. 'Not as the world gives.'"},
+    {t:"Cast Your Anxiety",p:"1 Peter 5:6–11",note:"Written to people facing real persecution. This isn't theoretical comfort."},
+    {t:"Great Is Your Faithfulness",p:"Lamentations 3:19–33",note:"Jeremiah in the worst moment of his life, finding one reason for hope."},
+    {t:"Phase Review",p:"Philippians 4:6–7 · Matthew 6:34 · Isaiah 41:10",note:"Read each anchor verse slowly. Try to say them from memory with the reference."}
+  ]},
+  {n:2,w:"Weeks 3–4",title:"The Shepherd",sub:"One image that runs the whole Bible",img:"🐑",c:"#7EB8A4",
+   anchor:["Psalm 23:1–3","John 10:11"],
+   days:[
+    {t:"The Shepherd Boy Anointed",p:"1 Samuel 16:1–13",note:"David is brought in from the fields. God sees what people can't see."},
+    {t:"Shepherd Credentials",p:"1 Samuel 17:32–37",note:"Before Goliath, David describes protecting sheep from lions and bears."},
+    {t:"The Lord Is My Shepherd",p:"Psalm 23",note:"Written by a man who was both shepherd and sheep. Read it slowly — every word carries weight."},
+    {t:"God Rebukes Bad Shepherds",p:"Ezekiel 34:1–16",note:"God is furious at Israel's leaders for abandoning the flock. Read it as God the Father speaking."},
+    {t:"I Will Search for My Sheep",p:"Ezekiel 34:17–31",note:"The promise Jesus fulfills 600 years later. Read verse 23 carefully."},
+    {t:"He Tends His Flock",p:"Isaiah 40:9–11",note:"Power and tenderness in the same passage. He carries the lambs close to his heart."},
+    {t:"I Am the Gate",p:"John 10:1–10",note:"'I AM the gate' comes before 'I AM the shepherd.' Notice the order."},
+    {t:"I Am the Good Shepherd",p:"John 10:11–21",note:"Jesus claims the exact identity God announced in Ezekiel 34. The 600-year gap closes."},
+    {t:"The Lost Sheep",p:"Luke 15:1–7",note:"Context: Jesus is telling this to people criticizing him for eating with sinners."},
+    {t:"The Lost Son",p:"Luke 15:11–32",note:"A father runs to his returning son. In that culture, a father never ran. That is the point."},
+    {t:"Sheep Without a Shepherd",p:"Matthew 9:35–38",note:"Jesus sees the crowds and is moved with compassion. The word is 'splagchnizomai' — gut-level."},
+    {t:"Sheep and Goats",p:"Matthew 25:31–46",note:"The final judgment is framed as a shepherd separating his flock. Context matters."},
+    {t:"The Lamb as Shepherd",p:"Revelation 7:13–17",note:"In Revelation, the Lamb IS the shepherd. The image comes full circle."},
+    {t:"Phase Review",p:"Psalm 23 · John 10:11 · Luke 15:4",note:"David → Ezekiel's promise → Jesus' claim → Revelation's fulfillment. One image, four moments."}
+  ]},
+  {n:3,w:"Weeks 5–6",title:"Light Breaking In",sub:"The first words God ever spoke",img:"✦",c:"#E8D5A3",
+   anchor:["John 1:1–5","John 8:12"],
+   days:[
+    {t:"In the Beginning",p:"Genesis 1:1–5",note:"God's first words are about light, spoken into darkness. Remember this when you read John 1."},
+    {t:"The Word Became Flesh",p:"John 1:1–14",note:"John deliberately echoes Genesis 1. 'In the beginning...' Read both passages back to back."},
+    {t:"A Great Light",p:"Isaiah 9:1–7",note:"Written 700 years before Jesus. Matthew quotes this directly when Jesus moves to Galilee."},
+    {t:"Arise, Shine",p:"Isaiah 60:1–3",note:"Israel is called to reflect God's light to the nations. A theme Paul picks up in Ephesians."},
+    {t:"Fulfilling Isaiah",p:"Matthew 4:12–17",note:"Jesus moves to Galilee and Matthew quotes Isaiah 9:2. The 700-year gap closes in one verse."},
+    {t:"You Are the Light",p:"Matthew 5:14–16",note:"Jesus calls his followers 'the light of the world.' Not just himself — them."},
+    {t:"Light Has Come Into the World",p:"John 3:16–21",note:"John 3:16 lives inside a Light/Darkness passage. Read the full context — verses 19–21 change everything."},
+    {t:"I Am the Light of the World",p:"John 8:12–20",note:"Said in the temple courts near the treasury. The setting mattered to his audience."},
+    {t:"In Your Light We See Light",p:"Psalm 36:5–9",note:"One of the most beautiful Psalms about light. Every line is worth memorizing."},
+    {t:"God Is Light",p:"1 John 1:1–10",note:"John's letter opens the same way as his Gospel. Same author, same theme, intimate tone."},
+    {t:"Treasure in Jars of Clay",p:"2 Corinthians 4:1–6",note:"'God said let light shine out of darkness shines in our hearts.' Genesis 1 imagery, applied to us."},
+    {t:"Children of Light",p:"Ephesians 5:8–14",note:"'You were once darkness, now you ARE light.' Not just in the light — you are the light."},
+    {t:"No Sun Needed",p:"Revelation 21:22–27",note:"The city needs no lamp because God is its light. The Genesis 1 story finds its resolution."},
+    {t:"Phase Review",p:"John 1:1–5 · John 8:12 · Psalm 27:1",note:"Genesis light → Isaiah prophecy → Jesus' claim → Revelation's completion. One arc."}
+  ]},
+  {n:4,w:"Weeks 7–9",title:"The Exodus",sub:"The original rescue story",img:"🌊",c:"#6B9EC7",
+   anchor:["Exodus 14:14","Exodus 3:14"],
+   days:[
+    {t:"Israel Enslaved",p:"Exodus 1:1–14",note:"From Joseph's favor to brutal slavery in just a few verses. The setup for everything."},
+    {t:"Moses in the Basket",p:"Exodus 2:1–10",note:"The deliverer is nearly killed as an infant. A pattern that will repeat with Jesus."},
+    {t:"Moses Flees",p:"Exodus 2:11–25",note:"Moses' first attempt at deliverance fails. Then the chapter ends: 'God heard their groaning.'"},
+    {t:"The Burning Bush",p:"Exodus 3:1–12",note:"The bush burns but isn't consumed. Pay attention to where Moses is told to stand."},
+    {t:"I AM WHO I AM",p:"Exodus 3:13–22",note:"God reveals His personal name. This moment echoes through the entire Bible into John 8."},
+    {t:"Moses Objects",p:"Exodus 4:1–17",note:"Five excuses. God answers every one. The patience here is astonishing."},
+    {t:"Pharaoh Refuses",p:"Exodus 5:1–21",note:"First confrontation. Things get worse before they get better. The people blame Moses."},
+    {t:"The Passover Lamb",p:"Exodus 12:1–30",note:"Blood on the doorposts. The death angel passes over. Paul will call Jesus our Passover lamb."},
+    {t:"The Exodus Begins",p:"Exodus 12:31–42",note:"430 years of slavery ends at midnight. They leave in haste with plunder."},
+    {t:"Pillar of Cloud and Fire",p:"Exodus 13:17–22",note:"God's visible presence leading them. He never removes it during their journey."},
+    {t:"Trapped at the Red Sea",p:"Exodus 14:1–14",note:"Army behind them, sea in front. Your anchor verse: 'The Lord will fight for you; be still.'"},
+    {t:"The Red Sea Crossing",p:"Exodus 14:15–31",note:"The defining moment of the Old Testament. Wall of water on both sides."},
+    {t:"The Song of Moses",p:"Exodus 15:1–21",note:"Immediate worship after crossing. Miriam leads the women. Compare this to Revelation 15:3."},
+    {t:"Manna and Quail",p:"Exodus 16:1–18",note:"They grumble a month after the Red Sea. Jesus will call himself the true manna in John 6."},
+    {t:"Water from the Rock",p:"Exodus 17:1–7",note:"Paul in 1 Corinthians says the rock was Christ. Read it slowly — what does that mean?"},
+    {t:"Arriving at Sinai",p:"Exodus 19:1–9",note:"God proposes a covenant. 'You will be my treasured possession.' A marriage proposal."},
+    {t:"The Ten Commandments",p:"Exodus 20:1–17",note:"Read them slowly. Notice the first two. Notice what the Sabbath means and why."},
+    {t:"Faith of Moses",p:"Hebrews 11:23–29",note:"New Testament author reads Exodus as a faith story. Same events, completely different lens."},
+    {t:"Paul Reads Exodus as Jesus Story",p:"1 Corinthians 10:1–13",note:"The rock was Christ. The manna was Christ. Paul is reading Exodus typologically."},
+    {t:"The New Exodus Promise",p:"Isaiah 43:1–7",note:"God promises a new Exodus. 'I am making a way in the wilderness.' Jesus is that way."},
+    {t:"Phase Review",p:"Exodus 14:14 · Exodus 3:14 · 1 Corinthians 10:4",note:"Moses is a shadow. Jesus is the substance. The Exodus is the Gospel in preview."}
+  ]},
+  {n:5,w:"Weeks 10–12",title:"The Kingdom",sub:"What Jesus actually came to say",img:"⛰",c:"#A89CC8",
+   anchor:["Matthew 5:3–5","Matthew 6:33"],
+   days:[
+    {t:"The Mission Statement",p:"Isaiah 61:1–11",note:"Jesus will read this in his hometown. Know it before he does — it changes how Luke 4 hits."},
+    {t:"Jesus Reads Isaiah",p:"Luke 4:14–30",note:"He reads Isaiah 61, closes the scroll, sits down. 'Today this is fulfilled in your hearing.'"},
+    {t:"Repent, the Kingdom Is Near",p:"Matthew 4:12–25",note:"Jesus' first sermon is four words. Then he immediately calls fishermen."},
+    {t:"The Beatitudes",p:"Matthew 5:1–12",note:"Every beatitude flips a cultural assumption. Who does Jesus say is actually blessed?"},
+    {t:"Salt and Light",p:"Matthew 5:13–20",note:"Immediately after the beatitudes. The poor in spirit become the light of the world."},
+    {t:"You Have Heard It Said",p:"Matthew 5:21–48",note:"Jesus recalibrates the entire law. Not abolishing it — fulfilling it. Deepening it."},
+    {t:"Secret Devotion",p:"Matthew 6:1–18",note:"Giving, prayer, fasting — all done in secret. Why does the audience matter so much?"},
+    {t:"Treasure and Worry",p:"Matthew 6:19–34",note:"Where your treasure is determines what you're anxious about. Your life verse is here."},
+    {t:"Ask, Seek, Knock",p:"Matthew 7:1–12",note:"The sermon builds toward this. Prayer here isn't a practice — it's a relationship."},
+    {t:"Two Roads, Two Trees, Two Houses",p:"Matthew 7:13–29",note:"The sermon ends with three binary choices. The crowd is astonished at his authority."},
+    {t:"The Sower",p:"Matthew 13:1–23",note:"Jesus explains why some people receive the Kingdom and others don't. Which soil are you?"},
+    {t:"Kingdom Parables",p:"Matthew 13:24–52",note:"Six more Kingdom comparisons in one chapter. What surprises you?"},
+    {t:"The Prodigal Son",p:"Luke 15:11–32",note:"A father runs to his returning son. In that culture, a father never ran. That is the point."},
+    {t:"Pharisee and Tax Collector",p:"Luke 18:9–17",note:"The Kingdom belongs to those who know they don't deserve it."},
+    {t:"Zacchaeus",p:"Luke 19:1–10",note:"Chief tax collector. Jesus invites himself over. The crowd is furious. Jesus doesn't care."},
+    {t:"The Rich Young Man",p:"Mark 10:17–31",note:"He kept all the commandments. Jesus loved him. Then named the one thing."},
+    {t:"The Greatest Must Be Servant",p:"Mark 10:35–45",note:"James and John ask for the top seats. Jesus redefines greatness entirely."},
+    {t:"Born Again",p:"John 3:1–21",note:"Nicodemus comes at night — a Pharisee, a ruler, asking the right questions. Secretly."},
+    {t:"Kingdom of Righteousness and Peace",p:"Romans 14:17–19",note:"Paul's short definition of the Kingdom. Not food and drink — but righteousness, peace, joy."},
+    {t:"The Kingdoms Become His",p:"Revelation 11:15",note:"One verse. Read it like a trumpet blast. The whole Bible is moving toward this moment."},
+    {t:"Phase Review",p:"Matthew 5:3–5 · Matthew 6:33 · Isaiah 61:1",note:"The Kingdom isn't a place you go to — it's a reality Jesus inaugurated and we inhabit now."}
+  ]},
+  {n:6,w:"Weeks 13–15",title:"The Names",sub:"Seven ways Jesus said 'I AM'",img:"✶",c:"#C8A96E",
+   anchor:["John 14:6","John 11:25–26"],
+   days:[
+    {t:"I AM — Then and Now",p:"Exodus 3:14 + John 8:58",note:"Read both passages back to back. 700+ years apart. The same person is speaking."},
+    {t:"Feeding the 5000",p:"John 6:1–15",note:"Context for the Bread of Life. After this miracle, they want to make him king by force."},
+    {t:"I Am the Bread of Life",p:"John 6:35–51",note:"The crowd wanted physical bread. Jesus offers something they didn't know they needed."},
+    {t:"This Is a Hard Teaching",p:"John 6:52–71",note:"Many disciples leave after this. Jesus asks the twelve: 'Do you want to leave too?'"},
+    {t:"Rivers of Living Water",p:"John 7:37–52",note:"Jesus shouts this in the temple courts on the last day of the feast. Maximum drama."},
+    {t:"Woman Caught in Adultery",p:"John 8:1–11",note:"Context before the Light of the World claim. He writes in the dust. What did he write?"},
+    {t:"I Am the Light of the World",p:"John 8:12–30",note:"Said near the temple treasury. Connects directly to your Phase 3 reading."},
+    {t:"The Man Born Blind",p:"John 9:1–41",note:"The Light of the World heals blindness. The Pharisees who can 'see' become the blind ones."},
+    {t:"I Am the Gate",p:"John 10:1–10",note:"Often overlooked. 'I am the gate' comes before 'I am the shepherd.' Both matter."},
+    {t:"I Am the Good Shepherd",p:"John 10:11–21",note:"You've read this before in Phase 2. It lands differently now that you have all the context."},
+    {t:"I Am the Resurrection",p:"John 11:1–27",note:"Mary and Martha's grief. The weeping at Lazarus's tomb. Then the claim."},
+    {t:"Lazarus Raised",p:"John 11:28–44",note:"'Lazarus, come out.' Jesus weeps before he raises him. Why does he weep if he knows?"},
+    {t:"Foot Washing",p:"John 13:1–17",note:"Context before the farewell discourse. On the night of his arrest, the greatest washes feet."},
+    {t:"Betrayal Foretold",p:"John 13:18–38",note:"Judas leaves into the night. Peter's denial predicted. The darkest moment before the light."},
+    {t:"I Am the Way, Truth, and Life",p:"John 14:1–14",note:"Said to eleven confused, grieving disciples. 'Do not let your hearts be troubled.'"},
+    {t:"The Holy Spirit Promised",p:"John 14:15–31",note:"Jesus promises another advocate. 'Peace I leave with you' — your Phase 1 anchor verse."},
+    {t:"I Am the True Vine",p:"John 15:1–17",note:"Probably said while passing the golden vine on the temple gates. The image was everywhere."},
+    {t:"The World Will Hate You",p:"John 15:18–27",note:"Immediately after 'abide in me' comes 'the world hated me first.' Connected, not separate."},
+    {t:"Christ as Image of God",p:"Colossians 1:15–23",note:"Paul's theological compression of who Jesus is. Every I AM statement is here in condensed form."},
+    {t:"Son as Radiance of God's Glory",p:"Hebrews 1:1–4",note:"The most theologically dense paragraph in the New Testament. Four verses. Read them slowly."},
+    {t:"Phase Review",p:"John 14:6 · John 6:35 · John 11:25–26",note:"Seven claims. One person. Each one is a direct echo of Exodus 3:14."}
+  ]},
+  {n:7,w:"Weeks 16–18",title:"Wisdom and Two Paths",sub:"The oldest question in Proverbs",img:"⚖",c:"#7EB8A4",
+   anchor:["Proverbs 3:5–6","James 1:5"],
+   days:[
+    {t:"Fear of the Lord",p:"Proverbs 1:1–7",note:"The thesis of the whole book is in verse 7. Everything else is commentary on it."},
+    {t:"Wisdom Calls Out",p:"Proverbs 1:20–33",note:"Wisdom is personified as a woman shouting in the streets. Why the streets?"},
+    {t:"Benefits of Wisdom",p:"Proverbs 2:1–22",note:"The path metaphor begins. Two destinations, one fork in the road."},
+    {t:"Trust in the Lord",p:"Proverbs 3:1–12",note:"Your anchor verse is in verse 5–6. Read the 10 verses around it for full context."},
+    {t:"Wisdom's Blessings",p:"Proverbs 3:13–26",note:"'She is a tree of life to those who embrace her.' Where have you seen that before?"},
+    {t:"Wisdom's Call",p:"Proverbs 8:1–21",note:"Wisdom calls again. This time from the heights, the crossroads, the city gates."},
+    {t:"Wisdom at Creation",p:"Proverbs 8:22–36",note:"Wisdom was present at creation. Paul will identify this as Christ in Colossians 1."},
+    {t:"Two Banquets",p:"Proverbs 9:1–18",note:"Wisdom and Folly each host a banquet. Same invitation words. Radically different outcomes."},
+    {t:"David's Charge to Solomon",p:"1 Kings 2:1–4",note:"David's deathbed words to his son. Keep God's commands. Echoes Moses to Joshua."},
+    {t:"Solomon Asks for Wisdom",p:"1 Kings 3:1–15",note:"God is moved by what Solomon asks for. Notice what he deliberately does NOT ask for."},
+    {t:"Wisdom in Action",p:"1 Kings 3:16–28",note:"Two mothers, one baby. Wisdom looks strange from the outside. It works."},
+    {t:"The Queen of Sheba",p:"1 Kings 10:1–13",note:"She tests Solomon and is overwhelmed. 'The half was not told me.' His reputation spread."},
+    {t:"Solomon's Downfall",p:"1 Kings 11:1–13",note:"The man who wrote Proverbs didn't follow it. His wives turned his heart. Tragic."},
+    {t:"Vanity of Vanities",p:"Ecclesiastes 1:1–11",note:"Also by Solomon, written later. The tone shift is jarring. What changed in him?"},
+    {t:"The Search for Meaning",p:"Ecclesiastes 2:1–26",note:"He tried everything — success, pleasure, work. Read verses 24–26 for the landing."},
+    {t:"Fear God, Keep Commands",p:"Ecclesiastes 12:9–14",note:"The conclusion of the whole matter. After everything — this is where he lands."},
+    {t:"Wisdom in Suffering",p:"Job 1:1–12",note:"The righteous man who suffers. Pay attention: God is behind what happens. Why?"},
+    {t:"God Speaks from the Storm",p:"Job 38:1–18",note:"God's answer to Job's suffering isn't an explanation. He reveals himself instead."},
+    {t:"Wisdom in Trials",p:"James 1:1–18",note:"Your second anchor verse is here. Ask God for wisdom — specifically in the middle of trials."},
+    {t:"Earthly vs Heavenly Wisdom",p:"James 3:13–18",note:"Two kinds of wisdom. One produces envy and disorder. One produces a harvest of righteousness."},
+    {t:"Phase Review",p:"Proverbs 3:5–6 · James 1:5 · Proverbs 4:18",note:"The path of the righteous is like morning sun, shining ever brighter till full day."}
+  ]},
+  {n:8,w:"Weeks 19–21",title:"The Suffering Servant",sub:"Written 700 years before it happened",img:"✝",c:"#C47E7E",
+   anchor:["Isaiah 53:5","John 1:29"],
+   days:[
+    {t:"First Servant Song",p:"Isaiah 42:1–9",note:"God introduces the servant. 'A bruised reed he will not break, a smoldering wick he will not snuff out.'"},
+    {t:"Second Servant Song",p:"Isaiah 49:1–13",note:"The servant speaks. Called before birth. Given as a light to the Gentiles."},
+    {t:"Third Servant Song",p:"Isaiah 50:4–11",note:"The servant is beaten and spat on — and does not hide his face. He set his face like flint."},
+    {t:"Fourth Servant Song Begins",p:"Isaiah 52:13–53:3",note:"Marred beyond human likeness. Despised and rejected. He had no beauty that we should desire him."},
+    {t:"Pierced for Our Transgressions",p:"Isaiah 53:4–12",note:"Your anchor verse is in here. Read all nine verses. Every single line is prophetic detail."},
+    {t:"Abraham and Isaac",p:"Genesis 22:1–19",note:"Father and son, the lamb, the mountain. The first preview of Calvary in Scripture."},
+    {t:"The Passover Lamb",p:"Exodus 12:1–13",note:"Blood on the doorposts. No bone broken. Paul calls Jesus our Passover lamb (1 Cor 5:7)."},
+    {t:"The Scapegoat",p:"Leviticus 16:1–22",note:"Two goats: one killed, one carries sin into the wilderness. Both of them picture Jesus."},
+    {t:"Behold the Lamb of God",p:"John 1:29–42",note:"John the Baptist sees Jesus and says it immediately. Where did he get that language?"},
+    {t:"The Last Supper",p:"Mark 14:1–26",note:"The plot to kill Jesus. Judas goes to the priests. Jesus takes bread. The Passover becomes something new."},
+    {t:"Gethsemane and Arrest",p:"Mark 14:27–52",note:"Your Phase 1 anchor story returns. Read it now knowing Isaiah 53 and the Passover lamb."},
+    {t:"Trial Before Pilate",p:"Mark 15:1–20",note:"Pilate knows he is innocent. He hands him over anyway. The soldiers mock a king."},
+    {t:"The Crucifixion",p:"Mark 15:21–47",note:"Read Isaiah 53 immediately before this. Every detail lines up. 700 years of prophecy fulfilled."},
+    {t:"Ethiopian Reads Isaiah 53",p:"Acts 8:26–40",note:"A man reading Isaiah 53 alone in a chariot. Philip asks: 'Do you understand what you're reading?'"},
+    {t:"By His Wounds You Are Healed",p:"1 Peter 2:21–25",note:"Peter quotes Isaiah 53:5. He was at the crucifixion. This is deeply personal for him."},
+    {t:"Christ the High Priest",p:"Hebrews 9:11–28",note:"Jesus is both the priest and the sacrifice. He enters the true Holy of Holies once for all."},
+    {t:"While We Were Still Sinners",p:"Romans 5:6–11",note:"The timing matters. He didn't wait until we were worthy. He died for his enemies."},
+    {t:"Reconciled Through His Blood",p:"Colossians 1:19–23",note:"Peace through blood. The reconciliation of all things — not just people but the cosmos."},
+    {t:"The Lamb Receives the Scroll",p:"Revelation 5:1–14",note:"John turns expecting a lion and sees a Lamb — looking as if it had been slain. The whole Bible is in that image."},
+    {t:"Therefore No Condemnation",p:"Romans 8:1–4",note:"The result of Isaiah 53 and the cross: therefore there is now no condemnation. Read it as the verdict."},
+    {t:"Phase Review",p:"Isaiah 53:5 · Revelation 5:12 · John 1:29",note:"Read Isaiah 53 one more time — but now you have eight weeks of context behind you."}
+  ]},
+  {n:9,w:"Weeks 22–24",title:"Death Couldn't Hold Him",sub:"The bridge of What A Beautiful Name",img:"☀",c:"#6B9EC7",
+   anchor:["Romans 8:11","1 Corinthians 15:55–57"],
+   days:[
+    {t:"The Empty Tomb",p:"John 20:1–10",note:"Mary, Peter, and John. They see the grave clothes lying there undisturbed. What does that mean?"},
+    {t:"Mary and the Gardener",p:"John 20:11–18",note:"She mistakes Jesus for the gardener. That is not an accident — the new creation has begun."},
+    {t:"Peace Be With You",p:"John 20:19–23",note:"Jesus appears behind locked doors. The very first thing he says: peace."},
+    {t:"Doubting Thomas",p:"John 20:24–31",note:"'My Lord and my God.' The highest confession of Jesus' identity in all of John's Gospel."},
+    {t:"Breakfast on the Shore",p:"John 21:1–14",note:"Seven disciples, 153 fish, charcoal fire. Why does John count the fish?"},
+    {t:"Peter Restored",p:"John 21:15–25",note:"Three denials. Three questions. 'Do you love me?' The shame is being directly healed."},
+    {t:"Road to Emmaus",p:"Luke 24:13–35",note:"Jesus walks with them for hours and they don't recognize him. Then he breaks bread."},
+    {t:"He Opened Their Minds",p:"Luke 24:36–53",note:"Jesus shows them that all of Scripture — Moses, Prophets, Psalms — was about him."},
+    {t:"If Christ Has Not Been Raised",p:"1 Corinthians 15:1–19",note:"Paul's ruthless logic: if no resurrection, everything is false. He doesn't soften it."},
+    {t:"Christ the Firstfruits",p:"1 Corinthians 15:20–34",note:"Death came through one man, Adam. Life through one man, Christ. The comparison matters."},
+    {t:"The Resurrection Body",p:"1 Corinthians 15:35–58",note:"What will the resurrection look like? Paul uses a seed. Something different, but continuous."},
+    {t:"Dead to Sin, Alive in Christ",p:"Romans 6:1–14",note:"Baptism as burial and resurrection. You've already died with him. Now live like it."},
+    {t:"Life in the Spirit",p:"Romans 8:1–11",note:"Your anchor verse is in verse 11. 'The Spirit of him who raised Jesus lives in you.'"},
+    {t:"Future Glory",p:"Romans 8:12–25",note:"All of creation is waiting for the resurrection. It's groaning like a woman in labor."},
+    {t:"More Than Conquerors",p:"Romans 8:26–39",note:"You read this in Phase 1. Read it again now — with everything you've learned since."},
+    {t:"Seated With Christ",p:"Ephesians 1:15–23",note:"We are raised and seated with Christ. Not 'will be.' Already. Present tense."},
+    {t:"Made Alive in Christ",p:"Ephesians 2:1–10",note:"'Because of his great love for us' — the hinge of the whole passage. Don't rush past it."},
+    {t:"Set Your Mind on Things Above",p:"Colossians 3:1–17",note:"The resurrection changes how you live right now. This is the practical application."},
+    {t:"New Creation",p:"2 Corinthians 5:14–21",note:"Your second anchor verse is here. 'If anyone is in Christ — new creation.' Already."},
+    {t:"Peter's Pentecost Sermon",p:"Acts 2:22–36",note:"Peter preaches the resurrection 50 days after it happened. 3,000 respond to one sermon."},
+    {t:"Phase Review",p:"Romans 8:11 · 1 Corinthians 15:55–57 · 2 Corinthians 5:17",note:"Death couldn't hold him — and because of that, death can't hold you either."}
+  ]},
+  {n:10,w:"Weeks 25–26",title:"All Things New",sub:"The last chapters answer the first chapters",img:"◈",c:"#A89CC8",
+   anchor:["Revelation 21:5","Revelation 22:13"],
+   days:[
+    {t:"The Original Creation",p:"Genesis 1:1–2:3",note:"Read slowly. You are reading the opening of a story that ends in Revelation 22."},
+    {t:"The Garden of Eden",p:"Genesis 2:4–25",note:"The tree of life. The river. The man and woman. Remember every detail."},
+    {t:"The Fall",p:"Genesis 3:1–24",note:"The exile from the garden. The tree of life blocked off. Everything broken here."},
+    {t:"New Heavens and New Earth",p:"Isaiah 65:17–25",note:"Written 700 years before Revelation — and uses almost identical language."},
+    {t:"All Nations Come to God",p:"Isaiah 66:18–24",note:"The end of Isaiah mirrors the end of Revelation. One consistent vision across the centuries."},
+    {t:"River from the Temple",p:"Ezekiel 47:1–12",note:"A river flows from the temple, growing deeper. Trees on both banks for healing. Preview of Revelation 22."},
+    {t:"Creation Groaning",p:"Romans 8:18–25",note:"All of creation is waiting for the sons of God to be revealed. The whole cosmos is invested."},
+    {t:"The Day of the Lord",p:"2 Peter 3:10–13",note:"The current heavens and earth give way. New heavens and new earth of righteousness."},
+    {t:"The Rider on the White Horse",p:"Revelation 19:11–21",note:"His name is the Word of God. His robe is dipped in blood. He is the Lamb who became King."},
+    {t:"The Great White Throne",p:"Revelation 20:11–15",note:"Every person stands before God. The books are opened. Also the Book of Life."},
+    {t:"New Heaven and New Earth",p:"Revelation 21:1–8",note:"Your anchor verse is in verse 5. 'I am making all things new.' Not all new things — all things new."},
+    {t:"The New Jerusalem",p:"Revelation 21:9–27",note:"No temple in the city — God is its temple. No sun — God is its light. Remember Phase 3."},
+    {t:"The River of Life",p:"Revelation 22:1–21",note:"The tree of life from Genesis 3 is here, freely available. The curse is completely gone."},
+    {t:"Everything Answered",p:"Genesis 1–3 + Revelation 21–22",note:"Read them side by side one final time. Every thread lands here. The story is complete."}
+  ]}
 ];
 
-// State
-let completed = JSON.parse(localStorage.getItem('bible-plan-done') || '{}');
-let openPhase = null;
-let activeTab = {};
+// ─── STATE ───────────────────────────────────────────────────────────
+let done = JSON.parse(localStorage.getItem('stp-done')||'{}');
+let currentPhase = null;
+let currentDay = null;
+let deepDiveCache = {};
+let activeTab = 'overview';
 
-function saveCompleted() {
-  localStorage.setItem('bible-plan-done', JSON.stringify(completed));
+function save(){ localStorage.setItem('stp-done', JSON.stringify(done)); }
+
+function globalDay(pi, di){
+  let t = 0;
+  for(let i=0;i<pi;i++) t+=P[i].days.length;
+  return t+di+1;
+}
+function psalm(gd){ return ((gd-1)%150)+1; }
+function proverb(gd){ return ((gd-1)%31)+1; }
+
+function ewUrl(passage){
+  const m = passage.match(/^([\d\s]*[A-Za-z]+(?:\s[A-Za-z]+)*)\s+(\d+)/);
+  if(!m) return 'https://enduringword.com/';
+  const book = m[1].trim().toLowerCase().replace(/\s+/g,'-');
+  const ch = m[2];
+  return `https://enduringword.com/bible-commentary/${book}-${ch}/`;
 }
 
-function updateProgress() {
-  const count = Object.values(completed).filter(Boolean).length;
-  document.getElementById('progress-label').textContent = `${count} / 10 phases`;
-  document.getElementById('progress-fill').style.width = `${(count / 10) * 100}%`;
+// ─── NAVIGATION ──────────────────────────────────────────────────────
+function showScreen(name, btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(name==='map') buildMap();
 }
 
-function buildPhaseList() {
+function openPhase(pi){
+  currentPhase = pi;
+  buildPhaseDetail(pi);
+  const pd = document.getElementById('pdetail');
+  pd.style.display='block';
+  requestAnimationFrame(()=>{ pd.classList.add('active'); });
+  document.getElementById('main-nav').style.display='none';
+}
+
+function closePhase(){
+  const pd = document.getElementById('pdetail');
+  pd.classList.remove('active');
+  setTimeout(()=>{ pd.style.display='none'; }, 280);
+  document.getElementById('main-nav').style.display='flex';
+  buildHome();
+}
+
+function openDay(pi, di){
+  currentDay = {pi, di};
+  buildDayDetail(pi, di);
+  const sl = document.getElementById('day-slide');
+  sl.style.display='block';
+  requestAnimationFrame(()=>{ sl.classList.add('active'); });
+}
+
+function closeDay(){
+  const sl = document.getElementById('day-slide');
+  sl.classList.remove('active');
+  setTimeout(()=>{ sl.style.display='none'; }, 280);
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────
+function buildHome(){
+  const completedPhases = P.filter(p=>{
+    const total = p.days.length;
+    const pi = P.indexOf(p);
+    const doneCount = p.days.filter((_,di)=>done[`${pi}-${di}`]).length;
+    return doneCount===total;
+  }).length;
+  
+  document.getElementById('prog-label').textContent = `${completedPhases} / 10 phases`;
+  document.getElementById('prog-fill').style.width = `${(completedPhases/10)*100}%`;
+  
   const list = document.getElementById('phase-list');
-  list.innerHTML = '';
-  PHASES.forEach(phase => {
-    const isDone = completed[phase.number];
-    const isOpen = openPhase === phase.number;
-    const tab = activeTab[phase.number] || 'anchor';
-
-    const card = document.createElement('div');
-    card.className = `phase-card${isOpen ? ' open' : ''}`;
-    card.style.setProperty('--card-color', phase.color);
-
-    card.innerHTML = `
-      <div class="phase-header" onclick="togglePhase(${phase.number})">
-        <div class="phase-icon${isDone ? ' done' : ''}" style="border-color:${phase.color}44">
-          ${isDone ? '✓' : phase.image}
-        </div>
-        <div class="phase-meta">
-          <div class="phase-weeks">PHASE ${phase.number} · ${phase.weeks}</div>
-          <div class="phase-title">${phase.title}</div>
-          <div class="phase-sub">${phase.subtitle}</div>
-        </div>
-        <span class="phase-chevron">▾</span>
-      </div>
-      ${isOpen ? `
-      <div class="phase-body">
-        <div class="motif-band">
-          <div class="motif-label" style="color:${phase.color}">${phase.motif}</div>
-          <div class="motif-desc">${phase.motifDesc}</div>
-        </div>
-        <div class="tabs">
-          <button class="tab${tab==='anchor'?' active':''}" onclick="setTab(event,${phase.number},'anchor')">📌 Memorize</button>
-          <button class="tab${tab==='story'?' active':''}" onclick="setTab(event,${phase.number},'story')">📖 Story</button>
-          <button class="tab${tab==='connect'?' active':''}" onclick="setTab(event,${phase.number},'connect')">🔗 Thread</button>
-        </div>
-        <div class="tab-panel${tab==='anchor'?' active':''}">
-          <div class="panel-intro">ANCHOR VERSES — Know these cold. Reference and all.</div>
-          ${phase.anchor.map(v => `
-            <div class="verse-card" style="border-left-color:${phase.color}88">
-              <div class="verse-ref" style="color:${phase.color}">${v.ref}</div>
-              <div class="verse-text">"${v.text}"</div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="tab-panel${tab==='story'?' active':''}">
-          <div class="story-card" style="border-left-color:${phase.color}88">
-            <div class="story-ref" style="color:${phase.color}">${phase.story.ref}</div>
-            <div class="story-title">${phase.story.title}</div>
-            <div class="story-desc">${phase.story.desc}</div>
+  list.innerHTML = P.map((phase,pi)=>{
+    const total = phase.days.length;
+    const doneCount = phase.days.filter((_,di)=>done[`${pi}-${di}`]).length;
+    const pct = Math.round((doneCount/total)*100);
+    const isComplete = doneCount===total;
+    return `<div class="pcard" onclick="openPhase(${pi})" style="border-color:${isComplete?phase.c+'66':'var(--border)'}">
+      <div class="pcard-inner">
+        <div class="pcard-icon" style="border-color:${phase.c}33">${isComplete?'✓':phase.img}</div>
+        <div class="pcard-meta">
+          <div class="pcard-wk">PHASE ${phase.n} · ${phase.w}</div>
+          <div class="pcard-title">${phase.title}</div>
+          <div class="pcard-sub">${phase.sub}</div>
+          <div style="height:2px;background:var(--border);border-radius:1px;margin-top:8px;max-width:160px">
+            <div style="height:100%;border-radius:1px;background:${phase.c};width:${pct}%;transition:width .3s"></div>
           </div>
         </div>
-        <div class="tab-panel${tab==='connect'?' active':''}">
-          <div class="panel-intro">THE THREAD — How this phase echoes across Scripture</div>
-          <div class="connection-card" style="border-left-color:${phase.color}88">
-            <div class="connection-text">${phase.connection}</div>
+        <div class="pcard-right">
+          <div class="pcard-days" style="color:var(--muted)">${doneCount}/${total}</div>
+          <div class="pcard-check" style="border-color:${isComplete?phase.c:'var(--border)'};color:${isComplete?phase.c:'var(--faint)'}">${isComplete?'✓':'›'}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── PHASE DETAIL ─────────────────────────────────────────────────────
+function buildPhaseDetail(pi){
+  const ph = P[pi];
+  const inner = document.getElementById('pdetail-inner');
+  const doneCount = ph.days.filter((_,di)=>done[`${pi}-${di}`]).length;
+  
+  inner.innerHTML = `
+    <div class="back-bar">
+      <button class="back-btn" onclick="closePhase()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+        All Phases
+      </button>
+      <span class="back-bar-title">${ph.title}</span>
+    </div>
+    <div class="phase-hero" style="background:linear-gradient(135deg,${ph.c}11,transparent)">
+      <div class="lbl" style="color:${ph.c}">Phase ${ph.n} · ${ph.w}</div>
+      <div class="ptitle">${ph.title}</div>
+      <div class="psub">${ph.sub}</div>
+      <div class="prog-wrap" style="padding:12px 0 0">
+        <div class="prog-row"><span>PROGRESS</span><span style="color:${ph.c}">${doneCount} / ${ph.days.length} days</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${Math.round((doneCount/ph.days.length)*100)}%;background:${ph.c}"></div></div>
+      </div>
+    </div>
+    <div class="anchor-chips">
+      <div class="lbl">Anchor Verses — Memorize These</div>
+      ${ph.anchor.map(a=>`<div class="anchor-chip">📌 ${a}</div>`).join('')}
+    </div>
+    <div class="day-list">
+      <div class="lbl" style="padding:0 2px 10px">Daily Readings</div>
+      ${ph.days.map((day,di)=>{
+        const isDone = done[`${pi}-${di}`];
+        const gd = globalDay(pi,di);
+        return `<div class="dcard" onclick="openDay(${pi},${di})" style="border-color:${isDone?ph.c+'55':'var(--border)'}">
+          <div class="dcard-num${isDone?' done':''}" style="${isDone?`border-color:${ph.c};color:${ph.c};background:${ph.c}22`:''}">${isDone?'✓':di+1}</div>
+          <div class="dcard-meta">
+            <div class="dcard-title">${day.t}</div>
+            <div class="dcard-passage">${day.p} · Ps ${psalm(gd)} · Prov ${proverb(gd)}</div>
           </div>
+          <span class="dcard-arr">›</span>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="height:30px"></div>
+  `;
+}
+
+// ─── DAY DETAIL ───────────────────────────────────────────────────────
+function buildDayDetail(pi, di){
+  const ph = P[pi];
+  const day = ph.days[di];
+  const gd = globalDay(pi, di);
+  const ps = psalm(gd);
+  const pr = proverb(gd);
+  const isDone = done[`${pi}-${di}`];
+  const cacheKey = `${pi}-${di}`;
+  
+  document.getElementById('day-inner').innerHTML = `
+    <div class="back-bar">
+      <button class="back-btn" onclick="closeDay()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 19l-7-7 7-7"/></svg>
+        ${ph.title}
+      </button>
+    </div>
+    <div class="day-hero" style="background:linear-gradient(135deg,${ph.c}11,transparent)">
+      <div class="day-hero-day" style="color:${ph.c}">PHASE ${ph.n} · DAY ${di+1} OF ${ph.days.length}</div>
+      <div class="day-hero-title">${day.t}</div>
+      <div class="day-hero-passage" style="color:${ph.c}">${day.p}</div>
+      <div class="day-hero-note">${day.note}</div>
+    </div>
+    <div class="readings-row">
+      <div class="reading-chip">
+        <div class="reading-chip-label">TODAY'S PSALM</div>
+        <div class="reading-chip-val">Psalm ${ps}</div>
+      </div>
+      <div class="reading-chip">
+        <div class="reading-chip-label">TODAY'S PROVERB</div>
+        <div class="reading-chip-val">Proverbs ${pr}</div>
+      </div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" id="tab-overview" onclick="switchTab('overview',${pi},${di})">Overview</button>
+      <button class="tab" id="tab-dive" onclick="switchTab('dive',${pi},${di})">Deep Dive</button>
+      <button class="tab" id="tab-guzik" onclick="switchTab('guzik',${pi},${di})">Commentary</button>
+    </div>
+    <div class="tab-panel active" id="panel-overview">
+      <div style="margin-bottom:16px">
+        <div class="lbl">Today's Reading</div>
+        <div class="verse-card" style="border-left-color:${ph.c}">
+          <div class="verse-ref" style="color:${ph.c}">${day.p}</div>
+          <div class="verse-text" style="font-style:normal;color:var(--muted)">Open your Bible app and read ${day.p}</div>
         </div>
-        <div class="done-btn-wrap">
-          <button class="done-btn" 
-            style="border-color:${isDone ? phase.color : 'var(--border)'}; background:${isDone ? phase.color+'22' : 'transparent'}; color:${isDone ? phase.color : 'var(--muted)'}"
-            onclick="toggleDone(event,${phase.number})">
-            ${isDone ? '✓ Phase Complete' : 'Mark Phase Complete'}
-          </button>
+        <div class="verse-card" style="border-left-color:${ph.c}88">
+          <div class="verse-ref" style="color:${ph.c}88">PSALM ${ps}</div>
+          <div class="verse-text" style="font-style:normal;color:var(--muted)">Read Psalm ${ps} as today's prayer and worship</div>
+        </div>
+        <div class="verse-card" style="border-left-color:${ph.c}55">
+          <div class="verse-ref" style="color:${ph.c}55">PROVERBS ${pr}</div>
+          <div class="verse-text" style="font-style:normal;color:var(--muted)">Read Proverbs ${pr} for today's practical wisdom</div>
         </div>
       </div>
-      ` : ''}
-    `;
-    list.appendChild(card);
-  });
-  updateProgress();
-}
-
-function buildOverview() {
-  const grid = document.getElementById('overview-grid');
-  grid.innerHTML = '';
-  PHASES.forEach(phase => {
-    const isDone = completed[phase.number];
-    const card = document.createElement('div');
-    card.className = `overview-card${isDone ? ' done' : ''}`;
-    card.style.borderColor = isDone ? phase.color + '66' : 'var(--border)';
-    card.innerHTML = `
-      <div class="overview-num">PHASE ${phase.number}</div>
-      <div class="overview-icon">${phase.image}</div>
-      <div class="overview-title">${phase.title}</div>
-      <div class="overview-weeks">${phase.weeks}</div>
-      <div class="overview-bar">
-        <div class="overview-bar-fill" style="width:${isDone?'100':'0'}%; background:${phase.color}"></div>
+      <button onclick="toggleDone(${pi},${di})" style="width:100%;padding:14px;border-radius:10px;border:1px solid ${isDone?ph.c:'var(--border)'};background:${isDone?ph.c+'22':'transparent'};color:${isDone?ph.c:'var(--muted)'};cursor:pointer;font-size:12px;font-family:sans-serif;letter-spacing:.1em;transition:all .2s" id="done-btn">
+        ${isDone?'✓ Day Complete':'Mark Day Complete'}
+      </button>
+    </div>
+    <div class="tab-panel" id="panel-dive">
+      <div id="dive-content">
+        <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">Get a rich, cinematic deep dive into this passage — who wrote it, what just happened before, what the original audience understood, and what to look for.</p>
+        <button class="dive-btn" onclick="generateDive(${pi},${di})">
+          ✦ Generate Deep Dive for ${day.p}
+        </button>
       </div>
-    `;
-    card.onclick = () => {
-      showScreen('home', document.querySelector('.nav-btn'));
-      setTimeout(() => { openPhase = phase.number; buildPhaseList(); scrollToPhase(phase.number); }, 50);
-    };
-    grid.appendChild(card);
-  });
+    </div>
+    <div class="tab-panel" id="panel-guzik">
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">David Guzik's verse-by-verse commentary on today's passage. Opens in your browser — best read alongside your Bible.</p>
+      <a href="${ewUrl(day.p)}" target="_blank" class="ew-btn" style="border-color:${ph.c}55">
+        📖 Open Enduring Word Commentary<br>
+        <span style="font-size:11px;color:var(--muted)">${day.p}</span>
+      </a>
+      <a href="${ewUrl(`Psalm ${ps}`)}" target="_blank" class="ew-btn">
+        📖 Commentary on Psalm ${ps}
+      </a>
+      <a href="${ewUrl(`Proverbs ${pr}`)}" target="_blank" class="ew-btn">
+        📖 Commentary on Proverbs ${pr}
+      </a>
+      <div class="ew-note">enduringword.com — David Guzik's free commentary</div>
+    </div>
+    <div style="height:30px"></div>
+  `;
+  
+  // Restore cached dive if exists
+  if(deepDiveCache[cacheKey]){
+    document.getElementById('dive-content').innerHTML = 
+      `<div class="dive-content">${deepDiveCache[cacheKey]}</div>
+       <button class="dive-btn" style="margin-top:14px;border-color:var(--border);color:var(--muted)" onclick="generateDive(${pi},${di})">↺ Regenerate</button>`;
+  }
 }
 
-function scrollToPhase(num) {
-  const cards = document.querySelectorAll('.phase-card');
-  if (cards[num - 1]) cards[num - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+function switchTab(name, pi, di){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
 }
 
-function togglePhase(num) {
-  openPhase = openPhase === num ? null : num;
-  buildPhaseList();
-  if (openPhase) setTimeout(() => scrollToPhase(num), 50);
+function toggleDone(pi, di){
+  const key = `${pi}-${di}`;
+  done[key] = !done[key];
+  save();
+  const btn = document.getElementById('done-btn');
+  const ph = P[pi];
+  const isDone = done[key];
+  btn.style.borderColor = isDone ? ph.c : 'var(--border)';
+  btn.style.background = isDone ? ph.c+'22' : 'transparent';
+  btn.style.color = isDone ? ph.c : 'var(--muted)';
+  btn.textContent = isDone ? '✓ Day Complete' : 'Mark Day Complete';
+  buildPhaseDetail(pi);
 }
 
-function setTab(e, num, tab) {
-  e.stopPropagation();
-  activeTab[num] = tab;
-  buildPhaseList();
+async function generateDive(pi, di){
+  const apiKey = localStorage.getItem('stp-api-key');
+  const ph = P[pi];
+  const day = ph.days[di];
+  const cacheKey = `${pi}-${di}`;
+  const container = document.getElementById('dive-content');
+  
+  if(!apiKey){
+    container.innerHTML = `<div style="background:var(--s2);border-radius:10px;padding:18px;border:1px solid var(--border)">
+      <p style="color:var(--gold);font-size:14px;margin-bottom:8px">API Key Required</p>
+      <p style="color:var(--muted);font-size:13px;line-height:1.6">To use AI Deep Dives, add your free Anthropic API key in Settings. Get one at <strong style="color:var(--gold)">console.anthropic.com</strong> — free credits are included.</p>
+    </div>`;
+    return;
+  }
+  
+  container.innerHTML = `<div class="dive-loading"><span class="spinner"></span>Diving into ${day.p}...</div>`;
+  
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:700,
+        messages:[{role:'user',content:`You are a biblical scholar and gifted storyteller writing for a 25-year-old worship leader who wants to understand Scripture deeply and speak about it naturally.
+
+Today's passage: ${day.p} — "${day.t}"
+
+Write a rich, cinematic deep dive (around 400-500 words) covering:
+- WHO wrote this, when, and what was their situation at the time?
+- WHAT had just happened in the story immediately before this passage?
+- CULTURAL CONTEXT: What would the original audience have immediately understood that modern readers miss?
+- THE SCENE: Paint it vividly — what does it look, feel, sound like?
+- THE THREAD: What image or theme here echoes elsewhere in Scripture?
+
+Write in flowing prose — no headers, no bullet points. Like a documentary narrator who deeply loves the Bible. Accessible but substantive.`}]
+      })
+    });
+    
+    const data = await res.json();
+    if(data.error){ throw new Error(data.error.message); }
+    const text = data.content[0].text;
+    deepDiveCache[cacheKey] = text.replace(/\n\n/g,'</p><p>').replace(/\n/g,' ');
+    container.innerHTML = `<div class="dive-content"><p>${deepDiveCache[cacheKey]}</p></div>
+      <button class="dive-btn" style="margin-top:14px;border-color:var(--border);color:var(--muted);font-size:12px" onclick="generateDive(${pi},${di})">↺ Regenerate</button>`;
+  } catch(e){
+    container.innerHTML = `<div style="background:var(--s2);border-radius:10px;padding:18px;border:1px solid #C47E7E55">
+      <p style="color:#C47E7E;font-size:13px;margin-bottom:6px">Error generating deep dive</p>
+      <p style="color:var(--muted);font-size:12px">${e.message}</p>
+      <button class="dive-btn" style="margin-top:12px" onclick="generateDive(${pi},${di})">Try Again</button>
+    </div>`;
+  }
 }
 
-function toggleDone(e, num) {
-  e.stopPropagation();
-  completed[num] = !completed[num];
-  saveCompleted();
-  buildPhaseList();
-  buildOverview();
+// ─── MAP ──────────────────────────────────────────────────────────────
+function buildMap(){
+  const grid = document.getElementById('map-grid');
+  grid.innerHTML = P.map((ph,pi)=>{
+    const total = ph.days.length;
+    const doneCount = ph.days.filter((_,di)=>done[`${pi}-${di}`]).length;
+    const pct = Math.round((doneCount/total)*100);
+    return `<div class="map-card" onclick="openPhase(${pi})" style="border-color:${pct===100?ph.c+'66':'var(--border)'}">
+      <div class="map-num">PHASE ${ph.n}</div>
+      <div class="map-icon">${ph.img}</div>
+      <div class="map-title">${ph.title}</div>
+      <div class="map-wk">${ph.w}</div>
+      <div class="map-prog"><div class="map-prog-fill" style="width:${pct}%;background:${ph.c}"></div></div>
+    </div>`;
+  }).join('');
 }
 
-function showScreen(name, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('screen-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (name === 'overview') buildOverview();
+// ─── SETTINGS ─────────────────────────────────────────────────────────
+function saveApiKey(){
+  const key = document.getElementById('api-key-input').value.trim();
+  if(key){ localStorage.setItem('stp-api-key', key); alert('API key saved!'); }
+}
+function resetProgress(){
+  if(confirm('Reset all progress?')){ done={}; save(); buildHome(); alert('Progress reset.'); }
 }
 
-// Init
-buildPhaseList();
-buildOverview();
+// ─── INIT ─────────────────────────────────────────────────────────────
+const savedKey = localStorage.getItem('stp-api-key');
+if(savedKey) document.getElementById('api-key-input').value = savedKey;
+buildHome();
 </script>
 </body>
 </html>
