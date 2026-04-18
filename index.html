@@ -163,17 +163,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Georgia
 <div class="settings-section">
 <div class="settings-block">
 <div class="settings-row" style="flex-direction:column;align-items:flex-start">
-<div>
-<div class="settings-label">AI Deep Dive API Key</div>
-<div class="settings-sub">Anthropic API key for AI-generated commentary</div>
-</div>
-<input class="settings-input" id="api-key-input" type="password" placeholder="sk-ant-..."/>
-<button class="save-btn" onclick="saveApiKey()">Save Key</button>
-</div>
-<div class="settings-info">The AI Deep Dive feature uses the Anthropic API. Get a free key at <strong style="color:var(--gold)">console.anthropic.com</strong> — free credits included. Your key is stored only on this device.</div>
-</div>
-<div class="settings-block">
-<div class="settings-row" style="flex-direction:column;align-items:flex-start">
 <div class="settings-label">Reset Progress</div>
 <div class="settings-sub">Clear all completed days and phases</div>
 <button class="save-btn" style="background:var(--border);color:var(--muted);margin-top:8px" onclick="resetProgress()">Reset All Progress</button>
@@ -183,7 +172,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Georgia
 <div class="settings-info" style="border:none">
 <strong style="color:var(--text)">Add to Home Screen</strong><br><br>
 <strong style="color:var(--gold)">iPhone:</strong> Safari → Share → Add to Home Screen<br><br>
-<strong style="color:var(--gold)">Android:</strong> Chrome → Menu → Add to Home Screen
+<strong style="color:var(--gold)">Android:</strong> Chrome → Menu → Add to Home Screen<br><br><br>
+<strong style="color:var(--text)">Deep Dive Prompts</strong><br><br>
+On each day's reading, tap the <strong style="color:var(--gold)">Deep Dive</strong> tab to get a ready-made prompt. Copy it and paste it into Claude at <strong style="color:var(--gold)">claude.ai</strong> for a full cinematic commentary on that passage.
 </div>
 </div>
 </div>
@@ -651,12 +642,15 @@ function buildDayDetail(pi, di){
       </button>
     </div>
     <div class="tab-panel" id="panel-dive">
-      <div id="dive-content">
-        <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">Get a rich, cinematic deep dive into this passage — who wrote it, what just happened before, what the original audience understood, and what to look for.</p>
-        <button class="dive-btn" onclick="generateDive(${pi},${di})">
-          ✦ Generate Deep Dive for ${day.p}
-        </button>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:14px">Copy this prompt and paste it into Claude (or any AI) for a full deep dive on today's passage.</p>
+      <div id="dive-prompt-box" style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;position:relative">
+        <div style="font-size:9px;color:var(--faint);letter-spacing:.15em;font-family:sans-serif;margin-bottom:10px">PROMPT — TAP TO COPY</div>
+        <div id="dive-prompt-text" style="font-size:13px;color:#C8C2B6;line-height:1.7;white-space:pre-wrap;word-break:break-word">${buildDivePrompt(ph, day, ps, pr)}</div>
       </div>
+      <button class="dive-btn" onclick="copyPrompt()" id="copy-btn">
+        ✦ Copy Prompt
+      </button>
+      <p style="font-size:11px;color:var(--faint);text-align:center;margin-top:10px;font-family:sans-serif">Then paste it into Claude at claude.ai</p>
     </div>
     <div class="tab-panel" id="panel-guzik">
       <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">David Guzik's verse-by-verse commentary on today's passage. Opens in your browser — best read alongside your Bible.</p>
@@ -704,58 +698,37 @@ function toggleDone(pi, di){
   buildPhaseDetail(pi);
 }
 
-async function generateDive(pi, di){
-  const apiKey = localStorage.getItem('stp-api-key');
-  const ph = P[pi];
-  const day = ph.days[di];
-  const cacheKey = `${pi}-${di}`;
-  const container = document.getElementById('dive-content');
-  
-  if(!apiKey){
-    container.innerHTML = `<div style="background:var(--s2);border-radius:10px;padding:18px;border:1px solid var(--border)">
-      <p style="color:var(--gold);font-size:14px;margin-bottom:8px">API Key Required</p>
-      <p style="color:var(--muted);font-size:13px;line-height:1.6">To use AI Deep Dives, add your free Anthropic API key in Settings. Get one at <strong style="color:var(--gold)">console.anthropic.com</strong> — free credits are included.</p>
-    </div>`;
-    return;
-  }
-  
-  container.innerHTML = `<div class="dive-loading"><span class="spinner"></span>Diving into ${day.p}...</div>`;
-  
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:700,
-        messages:[{role:'user',content:`You are a biblical scholar and gifted storyteller writing for a 25-year-old worship leader who wants to understand Scripture deeply and speak about it naturally.
+function buildDivePrompt(ph, day, ps, pr){
+  return `I'm a 25-year-old worship leader studying the Bible for depth and memorability. Today I'm reading ${day.p} as part of a phase called "${ph.title}" (${ph.sub}).
 
-Today's passage: ${day.p} — "${day.t}"
+Please give me a rich deep dive on this passage covering:
 
-Write a rich, cinematic deep dive (around 400-500 words) covering:
-- WHO wrote this, when, and what was their situation at the time?
-- WHAT had just happened in the story immediately before this passage?
-- CULTURAL CONTEXT: What would the original audience have immediately understood that modern readers miss?
-- THE SCENE: Paint it vividly — what does it look, feel, sound like?
-- THE THREAD: What image or theme here echoes elsewhere in Scripture?
+1. WHO wrote it, when, and what was their personal situation?
+2. WHAT had just happened in the story right before this passage?
+3. CULTURAL CONTEXT — what would the original audience have immediately understood that I might miss as a modern reader?
+4. THE SCENE — paint it vividly. What does it look, sound, and feel like to be there?
+5. THE THREAD — what image or theme in this passage echoes somewhere else in Scripture?
 
-Write in flowing prose — no headers, no bullet points. Like a documentary narrator who deeply loves the Bible. Accessible but substantive.`}]
-      })
-    });
-    
-    const data = await res.json();
-    if(data.error){ throw new Error(data.error.message); }
-    const text = data.content[0].text;
-    deepDiveCache[cacheKey] = text.replace(/\n\n/g,'</p><p>').replace(/\n/g,' ');
-    container.innerHTML = `<div class="dive-content"><p>${deepDiveCache[cacheKey]}</p></div>
-      <button class="dive-btn" style="margin-top:14px;border-color:var(--border);color:var(--muted);font-size:12px" onclick="generateDive(${pi},${di})">↺ Regenerate</button>`;
-  } catch(e){
-    container.innerHTML = `<div style="background:var(--s2);border-radius:10px;padding:18px;border:1px solid #C47E7E55">
-      <p style="color:#C47E7E;font-size:13px;margin-bottom:6px">Error generating deep dive</p>
-      <p style="color:var(--muted);font-size:12px">${e.message}</p>
-      <button class="dive-btn" style="margin-top:12px" onclick="generateDive(${pi},${di})">Try Again</button>
-    </div>`;
-  }
+Also, I read Psalm ${ps} and Proverbs ${pr} today alongside this. If either of those connects to ${day.p} in an interesting way, point that out.
+
+Write in flowing prose, like a documentary narrator who loves the Bible. No bullet points. Accessible but substantive — I want the "I never knew that" moments.`;
+}
+
+function copyPrompt(){
+  const text = document.getElementById('dive-prompt-text').innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copy-btn');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '✓ Copied!';
+    btn.style.borderColor = 'var(--gold)';
+    setTimeout(()=>{ btn.innerHTML = orig; btn.style.borderColor = ''; }, 2000);
+  }).catch(()=>{
+    // Fallback: select the text
+    const range = document.createRange();
+    range.selectNode(document.getElementById('dive-prompt-text'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
 }
 
 // ─── MAP ──────────────────────────────────────────────────────────────
@@ -776,17 +749,11 @@ function buildMap(){
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────────
-function saveApiKey(){
-  const key = document.getElementById('api-key-input').value.trim();
-  if(key){ localStorage.setItem('stp-api-key', key); alert('API key saved!'); }
-}
 function resetProgress(){
   if(confirm('Reset all progress?')){ done={}; save(); buildHome(); alert('Progress reset.'); }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────
-const savedKey = localStorage.getItem('stp-api-key');
-if(savedKey) document.getElementById('api-key-input').value = savedKey;
 buildHome();
 </script>
 </body>
